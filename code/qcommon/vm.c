@@ -804,21 +804,23 @@ locals from sp
 ==============
 */
 
-intptr_t QDECL VM_Call( vm_t *vm, int callnum, ... )
+intptr_t QDECL VM_SafeCall( vm_t *vm, int callnum, int nArgs, ... )
 {
 	vm_t	*oldVM;
 	intptr_t r;
 	int i;
 
 	if(!vm || !vm->name[0])
-		Com_Error(ERR_FATAL, "VM_Call with NULL vm");
+		Com_Error(ERR_FATAL, "VM_SafeCall with NULL vm");
+	if (nArgs >= MAX_VMMAIN_ARGS - 1)
+		Com_Error(ERR_FATAL, "VM_SafeCall with too many args");
 
 	oldVM = currentVM;
 	currentVM = vm;
 	lastVM = vm;
 
 	if ( vm_debugLevel ) {
-	  Com_Printf( "VM_Call( %d )\n", callnum );
+	  Com_Printf( "VM_SafeCall( %d )\n", callnum );
 	}
 
 	++vm->callLevel;
@@ -827,8 +829,8 @@ intptr_t QDECL VM_Call( vm_t *vm, int callnum, ... )
 		//rcg010207 -  see dissertation at top of VM_DllSyscall() in this file.
 		int args[MAX_VMMAIN_ARGS-1];
 		va_list ap;
-		va_start(ap, callnum);
-		for (i = 0; i < ARRAY_LEN(args); i++) {
+		va_start(ap, nArgs);
+		for (i = 0; i < nArgs; i++) {
 			args[i] = va_arg(ap, int);
 		}
 		va_end(ap);
@@ -852,8 +854,8 @@ intptr_t QDECL VM_Call( vm_t *vm, int callnum, ... )
 		va_list ap;
 
 		a.callnum = callnum;
-		va_start(ap, callnum);
-		for (i = 0; i < ARRAY_LEN(a.args); i++) {
+		va_start(ap, nArgs);
+		for (i = 0; i < nArgs; i++) {
 			a.args[i] = va_arg(ap, int);
 		}
 		va_end(ap);
